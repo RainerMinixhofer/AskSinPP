@@ -33,15 +33,24 @@ namespace as {
 		pinMode(OUTPUT_PIN, OUTPUT);
 		pinMode(ZERO_CROSS_PIN, INPUT);
 
+	#if defined(__AVR_ATmega32U4__)
+		TCCR3A = 0;
+		TCCR3B = 0;
+	#else
 		TCCR2A = 0;
 		TCCR2B = 0;
+	#endif
 
 		uint8_t oldSREG = SREG;
 		cli();
 		SetTimer();
 		SREG = oldSREG;
 
+	#if defined(__AVR_ATmega32U4__)
+		TIMSK3 |= (1 << OCIE3A);     // Enable COMPA and COMPB interruptions of TIMER3
+	#else
 		TIMSK2 |= (1 << OCIE2A);     // Enable COMPA and COMPB interruptions of TIMER2
+	#endif
 		_valid_zero_crossing = true;
 	}
 
@@ -82,7 +91,11 @@ namespace as {
 
 	void PhaseCut::SetTimer()
 	{
+		#if defined(__AVR_ATmega32U4__)
+			OCR3A = _timer; 
+		#else
 			OCR2A = _timer; 
+		#endif
 	}
 
 	void ZeroCrossEventCaller()
@@ -102,8 +115,13 @@ namespace as {
 			return;
 		_valid_zero_crossing = false;
 		phaseCut.Fire();
+	#if defined(__AVR_ATmega32U4__)
+		TCNT3 = 0;   // Restart counter (no need to call cli() inside an ISR)
+		TCCR3B |= (0 << WGM33) |(1 << WGM32) |(0 << WGM31) |(0 << WGM30) | (1 << CS30) | (0 << CS31) | (1 << CS32) ; // Enable/start CTC and set prescaler to 1024
+	#else
 		TCNT2 = 0;   // Restart counter (no need to call cli() inside an ISR)
 		TCCR2B |= (1 << WGM21) | (1 << CS20) | (1 << CS21) | (1 << CS22) ; // Enable/start CTC and set prescaler to 1024
+	#endif
 	}
 
 	void PhaseCut::Fire()
@@ -124,7 +142,11 @@ namespace as {
 					digitalWrite(OUTPUT_PIN, LOW);
 				#endif
 				
+		#if defined(__AVR_ATmega32U4__)
+			TCCR3B = 0; // Disable/stop CTC
+		#else
 			TCCR2B = 0; // Disable/stop CTC
+		#endif
 			SetTimer();
 			_valid_zero_crossing = true;
 	}

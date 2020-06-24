@@ -25,12 +25,18 @@ public:
   static void waitSerial () {
 //      DPRINT(F("Go sleep - ")); DHEXLN((uint16_t)sysclock.next());
       Serial.flush();
+#if defined(ARDUINO_AVR_PROMICRO)
+      while (!(UCSR1A & (1 << UDRE1))) {  // Wait for empty transmit buffer
+        UCSR1A |= 1 << TXC1;  // mark transmission not complete
+      }
+      while (!(UCSR1A & (1 << TXC1)));   // Wait for the transmission to complete
+#else
       while (!(UCSR0A & (1 << UDRE0))) {  // Wait for empty transmit buffer
         UCSR0A |= 1 << TXC0;  // mark transmission not complete
       }
       while (!(UCSR0A & (1 << TXC0)));   // Wait for the transmission to complete
+#endif
   }
-
   template <class Hal>
   static void powerSave (__attribute__((unused)) Hal& hal) {
 #if defined __AVR_ATmega644P__ || defined (__AVR_ATmega1284P__)
@@ -38,6 +44,8 @@ public:
 #elif defined __AVR_ATmega2560__
     //there is an issue, so you have to manual change something in Low-Power.cpp: https://github.com/rocketscream/Low-Power/issues/30#issuecomment-336801240
     LowPower.idle(SLEEP_FOREVER,ENABLEADC==true?ADC_ON:ADC_OFF, TIMER5_OFF, TIMER4_OFF, TIMER3_OFF,ENABLETIMER2==false?TIMER2_OFF:TIMER2_ON, TIMER1_ON, TIMER0_OFF, SPI_ON, USART3_OFF,USART2_OFF, USART1_OFF, USART0_ON, TWI_OFF);
+#elif defined __AVR_ATmega32U4__
+	LowPower.idle(SLEEP_FOREVER,ENABLEADC==true?ADC_ON:ADC_OFF, TIMER4_ON, TIMER3_OFF, TIMER1_OFF, TIMER0_OFF, SPI_ON, USART1_ON, TWI_OFF, USB_ON);
 #else
     LowPower.idle(SLEEP_FOREVER,ENABLEADC==true?ADC_ON:ADC_OFF,ENABLETIMER2==false?TIMER2_OFF:TIMER2_ON,TIMER1_ON,TIMER0_OFF,SPI_ON,USART0_ON,TWI_OFF);
 #endif

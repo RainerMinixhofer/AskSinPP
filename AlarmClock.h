@@ -201,6 +201,14 @@ public:
     while (ASSR & (1<<TCN2UB)); //wait for registers update
     TIFR |= (1<<TOV2); //clear interrupt flags
     TIMSK |= (1<<TOIE2); //enable TOV2 interrupt
+#elif ARDUINO_AVR_PROMICRO
+    TIMSK3 &= ~(1<<TOIE3); //Disable timer3 interrupts
+    TCNT3 = 0; //set initial counter value of timer 3
+	TCCR3A = 0; //timer 3 mode normal (non-PWM, Normal port operation, OC3A/OC3B/OC3C disconnected)
+	TCCR3B = (1<<CS32)|(1<<CS30); //set timer 3 prescaler to PCK/1024
+//    while (ASSR & ((1<<TCN2UB)|(1<<TCR2BUB))); //wait for registers update
+    TIFR3 |= (1<<TOV3); //clear interrupt flags
+    TIMSK3 |= (1<<TOIE3); //enable TOV3 interrupt
 #elif defined(ARDUINO_ARCH_AVR)
     TIMSK2  = 0; //Disable timer2 interrupts
     ASSR  = (1<<AS2); //Enable asynchronous mode
@@ -220,7 +228,9 @@ public:
 
   // return millis done of the current second
   uint32_t getCurrentMillis () {
-#ifdef ARDUINO_ARCH_AVR
+#ifdef ARDUINO_AVR_PROMICRO
+//    return (TCNT2 * 1000) / 255;
+#elif ARDUINO_ARCH_AVR
     return (TCNT2 * 1000) / 255;
 #else
     return 0; // not supported ???
@@ -231,7 +241,9 @@ public:
     if( resetovrflow == true ) {
       ovrfl = 0;
     }
-#ifdef ARDUINO_ARCH_AVR
+#ifdef ARDUINO_AVR_PROMICRO
+//    return (256 * ovrfl) + TCNT2;
+#elif ARDUINO_ARCH_AVR
     return (256 * ovrfl) + TCNT2;
 #elif defined(ARDUINO_ARCH_STM32F1) && defined(_RTCLOCK_H_)
     return rtc_get_count();
