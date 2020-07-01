@@ -1,0 +1,92 @@
+Timer Architecture Feature Comparison:			
+======================================			
+			
+ARDUINO_ARCH_AVR (e.g. ATmega324PB):												ATmega32u4:
+				
+Timer/Counter0:																		Timer/Counter0:
+---------------																		---------------
+	8 bit																				8 bit
+	Two independent Output Compare Units												Two independent Output Compare Units
+	Double Buffered Output Compare Registers											Double Buffered Output Compare Registers
+	Clear Timer on Compare Match (Auto Reload)											Clear Timer on Compare Match (Auto Reload)
+	Glitch Free, phase corrected Pulse Width Modulator (PWM)							Glitch Free, Phase Correct Pulse Width Modulator (PWM)
+	Variable PWM period																	Variable PWM Period
+	Frequency generator																	Frequency Generator
+	Three independent interrupt sources (TOV0, OCF0A, OCF0B)							Three Independent Interrupt Sources (TOV0, OCF0A, and OCF0B)
+				
+Timer/Counter1:																		Timer/Counter1:
+---------------																		---------------
+	True 16-bit Design (i.e., allows 16-bit PWM)										True 16-bit Design (i.e., Allows 16-bit PWM)
+	Two independent Output Compare Units												Three independent Output Compare Units
+	Double Buffered Output Compare Registers											Double Buffered Output Compare Registers
+	One Input Capture Unit																One Input Capture Unit
+	Input Capture Noise Canceler														Input Capture Noise Canceler
+	Clear Timer on Compare Match (Auto Reload)											Clear Timer on Compare Match (Auto Reload)
+	Glitch-free, Phase Correct Pulse Width Modulator (PWM)								Glitch-free, Phase Correct Pulse Width Modulator (PWM)
+	Variable PWM Period																	Variable PWM Period
+	Frequency Generator																	Frequency Generator
+	External Event Counter																External Event Counter
+	Four Independent interrupt Sources (TOV, OCFA, OCFB, and ICF)						Ten independent interrupt sources (TOV1, OCF1A, OCF1B, OCF1C, ICF1, TOV3, OCF3A, OCF3B, OCF3C, and ICF3)
+				
+Timer/Counter2:																		Timer/Counter4:
+---------------																		---------------
+	8 bit																				Up to 10-Bit Accuracy with alternative use of 8-Bit
+	Two Independent Output Compare Units												Three Independent Output Compare Units
+	Clear Timer on Compare Match (Auto Reload)											Clear Timer on Compare Match (Auto Reload)
+	Glitch-free, Phase Correct Pulse Width Modulator (PWM)								Glitch Free, Phase and Frequency Correct Pulse Width Modulator (PWM)
+																						Enhanced PWM mode: one optional additional accuracy bit without effect on output frequency
+	                                                                                    Variable PWM Period
+	                                                                                    Independent Dead Time Generators for each PWM channels
+	                                                                                    Synchronous update of PWM registers
+	Frequency (Waveform) Generator														Frequency (Waveform) Generator
+	10-bit Clock Prescaler																Separate 14-bit Prescaler Unit
+	One Overflow and Two Compare Match Interrupt Sources (TOV2, OCF2A, and OCF2B)		One Overflow and Four Compare Match Interrupt Sources (TOV4, OCF4A, OCF4B, OCF4D, FPF4)
+	Asynchronous and Synchronous Clocking Modes											High Speed Asynchronous and Synchronous Clocking Modes
+	Allows Clocking from External 32.768kHz Watch Crystal Independent of the I/O Clock	No external clocking!																						
+				
+Timer/Counter3:																		Timer/Counter3:
+---------------																		---------------
+	True 16-bit Design (i.e., allows 16-bit PWM)										True 16-bit Design (i.e., Allows 16-bit PWM)
+	Two independent Output Compare Units												Three independent Output Compare Units
+	Double Buffered Output Compare Registers											Double Buffered Output Compare Registers
+	One Input Capture Unit																One Input Capture Unit
+	Input Capture Noise Canceler														Input Capture Noise Canceler
+	Clear Timer on Compare Match (Auto Reload)											Clear Timer on Compare Match (Auto Reload)
+	Glitch-free, Phase Correct Pulse Width Modulator (PWM)								Glitch-free, Phase Correct Pulse Width Modulator (PWM)
+	Variable PWM Period																	Variable PWM Period
+	Frequency Generator																	Frequency Generator
+	External Event Counter																External Event Counter
+	Four Independent interrupt Sources (TOV, OCFA, OCFB, and ICF)						Ten independent interrupt sources (TOV1, OCF1A, OCF1B, OCF1C, ICF1, TOV3, OCF3A, OCF3B, OCF3C, and ICF3)
+		
+Timer/Counter4:
+---------------
+	True 16-bit Design (i.e., allows 16-bit PWM)	
+	Two independent Output Compare Units	
+	Double Buffered Output Compare Registers	
+	One Input Capture Unit	
+	Input Capture Noise Canceler	
+	Clear Timer on Compare Match (Auto Reload)	
+	Glitch-free, Phase Correct Pulse Width Modulator (PWM)	
+	Variable PWM Period	
+	Frequency Generator	
+	External Event Counter	
+	Four Independent interrupt Sources (TOV, OCFA, OCFB, and ICF)
+	
+USART Architecture Feature Comparison:
+======================================
+
+	Three USART instances USART0, USART1, USART2										Only one USART instance USART1
+	Full Duplex Operation (Independent Serial Receive and Transmit Registers)           Full Duplex Operation (Independent Serial Receive and Transmit Registers)
+	Asynchronous or Synchronous Operation                                               Asynchronous or Synchronous Operation
+	Master or Slave Clocked Synchronous Operation                                       Master or Slave Clocked Synchronous Operation
+	High Resolution Baud Rate Generator                                                 High Resolution Baud Rate Generator
+	Supports Serial Frames with 5, 6, 7, 8, or 9 data bits and 1 or 2 stop bits         Supports Serial Frames with 5, 6, 7, 8, or 9 Data Bits and 1 or 2 Stop Bits
+	Odd or Even Parity Generation and Parity Check Supported by Hardware                Odd or Even Parity Generation and Parity Check Supported by Hardware
+	Data OverRun Detection                                                              Data OverRun Detection
+	Framing Error Detection                                                             Framing Error Detection
+	Noise Filtering Includes False Start Bit Detection and Digital Low Pass Filter      Noise Filtering Includes False Start Bit Detection and Digital Low Pass Filter
+	Three Separate Interrupts on TX Complete, TX Data Register Empty and RX Complete    Three Separate Interrupts on TX Complete, TX Data Register Empty, and RX Complete
+	Multi-processor Communication Mode                                                  Multi-processor Communication Mode
+	Double Speed Asynchronous Communication Mode                                        Double Speed Asynchronous Communication Mode
+	Start Frame Detection (MCU power down and Standby sleep mode wakeup)				None
+    None																				Flow control CTS/RTS signals hardware management

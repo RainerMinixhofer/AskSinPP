@@ -103,40 +103,44 @@ public:
   void init() {
   #if ARDUINO_ARCH_AVR
   #define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
-    // use Time1 on AVR
-    TCCR1B = _BV(WGM13);        // set mode as phase and frequency correct pwm, stop the timer
+    // use Timer1 on AVR
+    TCCR1B = _BV(WGM13);        // set mode as phase and frequency correct pwm (WGM13:0=1000), stop the timer (CS12:0=0)
     TCCR1A = 0;                 // clear control register A
     const unsigned long cycles = (F_CPU / 2000000) * (1000000 / TICKS_PER_SECOND);
     unsigned short pwmPeriod;
     unsigned char clockSelectBits;
 
     if (cycles < TIMER1_RESOLUTION) {
-      clockSelectBits = _BV(CS10);
+      clockSelectBits = _BV(CS10); // no prescaling
       pwmPeriod = (unsigned short)cycles;
     }
     else if (cycles < TIMER1_RESOLUTION * 8) {
-      clockSelectBits = _BV(CS11);
+      clockSelectBits = _BV(CS11); // 1/8 prescaling
       pwmPeriod = cycles / 8;
     }
     else if (cycles < TIMER1_RESOLUTION * 64) {
-      clockSelectBits = _BV(CS11) | _BV(CS10);
+      clockSelectBits = _BV(CS11) | _BV(CS10); // 1/64 prescaling
       pwmPeriod = cycles / 64;
     }
     else if (cycles < TIMER1_RESOLUTION * 256) {
-      clockSelectBits = _BV(CS12);
+      clockSelectBits = _BV(CS12); // 1/256 prescaling
       pwmPeriod = cycles / 256;
     }
     else if (cycles < TIMER1_RESOLUTION * 1024) {
-      clockSelectBits = _BV(CS12) | _BV(CS10);
+      clockSelectBits = _BV(CS12) | _BV(CS10); // 1/1024 prescaling
       pwmPeriod = cycles / 1024;
     }
     else {
       clockSelectBits = _BV(CS12) | _BV(CS10);
       pwmPeriod = TIMER1_RESOLUTION - 1;
     }
-    TCNT1 = 0;
-    ICR1 = pwmPeriod;
-    TCCR1B = _BV(WGM13) | clockSelectBits;
+
+    DPRINT("Prescaling set to ");DHEXLN((int)(cycles/pwmPeriod));
+	DPRINT("PWM-Period set to ");DHEXLN((int)pwmPeriod);
+	
+    TCNT1 = 0; 								// reset timer1 counter value
+    ICR1 = pwmPeriod;					   	// set input capture register to PWM period
+    TCCR1B = _BV(WGM13) | clockSelectBits; 	// set prescaler bits to start counter
   #endif
   #ifdef ARDUINO_ARCH_STM32F1
     // Setup Timer2 on ARM
@@ -147,6 +151,7 @@ public:
     enable();
   }
 
+  // Disable Timer1 Overflow Interrupt
   void disable () {
   #ifdef ARDUINO_AVR_ATmega32
     TIMSK &= ~_BV(TOIE1);
@@ -157,6 +162,7 @@ public:
   #endif
   }
 
+  // Enable Timer1 Overflow Interrupt
   void enable () {
   #ifdef ARDUINO_AVR_ATmega32
     TIMSK |= _BV(TOIE1);
@@ -202,19 +208,23 @@ public:
     TIFR |= (1<<TOV2); //clear interrupt flags
     TIMSK |= (1<<TOIE2); //enable TOV2 interrupt
 #elif ARDUINO_AVR_PROMICRO
-    TIMSK3 &= ~(1<<TOIE3); //Disable timer3 interrupts
-    TCNT3 = 0; //set initial counter value of timer 3
-	TCCR3A = 0; //timer 3 mode normal (non-PWM, Normal port operation, OC3A/OC3B/OC3C disconnected)
-	TCCR3B = (1<<CS32)|(1<<CS30); //set timer 3 prescaler to PCK/1024
-//    while (ASSR & ((1<<TCN2UB)|(1<<TCR2BUB))); //wait for registers update
-    TIFR3 |= (1<<TOV3); //clear interrupt flags
-    TIMSK3 |= (1<<TOIE3); //enable TOV3 interrupt
+    TIMSK4  = 0; //Disable timer4 interrupts
+    TCNT4 = 0; //set initial counter value
+    TCCR4A = 0; // mode normal
+    TCCR4B = (1<<CS43); //set prescaler 128
+	//Counter Initialization for Asynchronous Mode (according to datasheet)
+	PLLCSR = (1<<PLLE); //enable PLL
+	_delay_us(100); // wait 100us for PLL to stabilize
+    while (PLLCSR & (1<<PLOCK)); //wait for PLL to lock
+	PLLFRQ |= (1<<PLLTM0); // enable asnchronous mode with PLL Postcaler Factor of one
+    TIFR4  = (1<<TOV4); //clear interrupt flags
+    TIMSK4  = (1<<TOIE4); //enable TOV2 interrupt
 #elif defined(ARDUINO_ARCH_AVR)
     TIMSK2  = 0; //Disable timer2 interrupts
     ASSR  = (1<<AS2); //Enable asynchronous mode
     TCNT2 = 0; //set initial counter value
     TCCR2A = 0; // mode normal
-    TCCR2B = (1<<CS22)|(1<<CS20); //set prescaller 128
+    TCCR2B = (1<<CS22)|(1<<CS20); //set prescaler 128
     while (ASSR & ((1<<TCN2UB)|(1<<TCR2BUB))); //wait for registers update
     TIFR2  = (1<<TOV2); //clear interrupt flags
     TIMSK2  = (1<<TOIE2); //enable TOV2 interrupt
@@ -229,7 +239,7 @@ public:
   // return millis done of the current second
   uint32_t getCurrentMillis () {
 #ifdef ARDUINO_AVR_PROMICRO
-//    return (TCNT2 * 1000) / 255;
+    return (TCNT4 * 1000) / 255;
 #elif ARDUINO_ARCH_AVR
     return (TCNT2 * 1000) / 255;
 #else
@@ -242,7 +252,7 @@ public:
       ovrfl = 0;
     }
 #ifdef ARDUINO_AVR_PROMICRO
-//    return (256 * ovrfl) + TCNT2;
+    return (256 * ovrfl) + TCNT4;
 #elif ARDUINO_ARCH_AVR
     return (256 * ovrfl) + TCNT2;
 #elif defined(ARDUINO_ARCH_STM32F1) && defined(_RTCLOCK_H_)
